@@ -27,52 +27,23 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--dset', default='RST', type=str) #MNIST RST
 
 parser.add_argument('--biosystem', default='PROTEIN', type=str)
-#parser.add_argument('--input_directory', default='./example_input/' , type=str)
-#parser.add_argument('--input_directory', default='/home/acrnjar/Dropbox/ML_ALL/RST/FrameGen/FrameGen/example_input/' , type=str)
-#parser.add_argument('--topology', default='peptide.prmtop', type=str) # Parameter and topology file
-#parser.add_argument('--trajectory', default='all_conformations.mdcrd', type=str) # Trajectory file
-parser.add_argument('--input_directory', default='/home/acrnjar/Desktop/TEMP/MLdatasets/VariablePep/' , type=str)
+parser.add_argument('--input_directory', default='./example_input/' , type=str)
 parser.add_argument('--topology_0', default='peptide_lab0.prmtop', type=str) # Parameter and topology file
 parser.add_argument('--trajectory_0', default='all_conformations_lab0.mdcrd', type=str) # Trajectory file
 parser.add_argument('--topology_1', default='peptide_lab1.prmtop', type=str) # Parameter and topology file
 parser.add_argument('--trajectory_1', default='all_conformations_lab1.mdcrd', type=str) # Trajectory file
-parser.add_argument('--scaling_factor', default=1., type=float) # Trajectory file  #
-#parser.add_argument('--scaling_factor', default=12.551, type=float) # Trajectory file  #
-#parser.add_argument('--scaling_factor', default=18.624, type=float) # Trajectory file  #
-#parser.add_argument('--scaling_factor', default=24.998, type=float) # Trajectory file  #
-"""
-#
-parser.add_argument('--biosystem', default='DNA', type=str)
-parser.add_argument('--input_directory', default='/home/acrnjar/Desktop/TEMP/MLdatasets/EADNA/' , type=str)
-#
-parser.add_argument('--topology_0', default='dnashort.WATNAMD_ACFS.prmtop', type=str) # Parameter and topology file                             
-parser.add_argument('--trajectory_0', default='dnashort_nptlungo0-19_WATNAMD_10ps.dcd', type=str) # Trajectory file  #
-#parser.add_argument('--scaling_factor', default=13.453, type=float) # Trajectory file  #
-parser.add_argument('--scaling_factor', default=1., type=float) # Trajectory file  #
-#
-#parser.add_argument('--topology', default='dnaonly.WATNAMD_ACFS.prmtop', type=str) # Parameter and topology file                             
-#parser.add_argument('--trajectory', default='dnaonly_nptlungo0-19_WATNAMD_10ps.dcd', type=str) # Trajectory file  #
-##dnaonly_nptlungo0-19_WATNAMD_10ps.dcd  dnaonly.WATNAMD_ACFS.prmtop
-"""
-#
-#
-#parser.add_argument("--no_train", action="store_true", help="Whether to train a new model or not")
-parser.add_argument("--no_train", default=False, type=bool)
-parser.add_argument("--load_for_train", default=False, type=bool)
-parser.add_argument("--show_forward_process", default=False, type=bool)
+#parser.add_argument('--scaling_factor', default=1., type=float) # Trajectory file  #
 
 # Model parameters
+parser.add_argument("--no_train", default=False, type=bool)
+parser.add_argument("--load_for_train", default=False, type=bool)
 parser.add_argument('--batch_size', default=10, type=int) #orig: 128
-#parser.add_argument('--n_epochs', default=30, type=int) #orig: 20
-#parser.add_argument('--n_epochs', default=250, type=int) #orig: 20
-parser.add_argument('--n_epochs', default=100, type=int) #orig: 20
+parser.add_argument('--n_epochs', default=200, type=int) #orig: 20
 parser.add_argument('--learning_rate', default=0.0001, type=float) #orig: 0.001
 parser.add_argument('--n_steps', default=1000, type=int) #orig: 1000
 parser.add_argument('--min_beta', default=10**-4, type=float) #orig: 10 ** -4 
 parser.add_argument('--max_beta', default=0.02, type=float) #orig:  0.02
-#n_steps, min_beta, max_beta = 1000, 10 ** -4, 0.02  # Originally used by the authors
 parser.add_argument('--time_emb_dim', default=100, type=int) #orig: 100
-#parser.add_argument("--input_shape", default='batch_1_Nat_3', type=str)
 parser.add_argument("--input_shape", default='batch_3Nat', type=str)
 
 # Classes settings                                                                                                                                                                
@@ -86,7 +57,7 @@ parser.add_argument('--output_directory', default='./', type=str)
 parser.add_argument('--num_samples', default=5, type=int)
 
 
-########################### AC
+########################### 
 
 def generate_training_data(prm_top_files, traj_files, frames_i, frames_f, backbone, output_dir):  #HERE
     """
@@ -199,9 +170,9 @@ def write_inpcrd(inp_tensor,outname='out.inpcrd'):
 def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, dims=3, what_label=0):
     """Given a DDPM model, a number of samples to be generated and a device, returns some newly generated samples"""
 
-    frames_per_gif=10 ##
-    frame_idxs = np.linspace(0, ddpm.n_steps, frames_per_gif).astype(np.uint) ##
-    frames = [] ##
+    frames_per_gif=10 
+    frame_idxs = np.linspace(0, ddpm.n_steps, frames_per_gif).astype(np.uint) 
+    frames = [] 
 
     atoms=ats
     ndims=dims
@@ -210,36 +181,36 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
     elif args.input_shape=='batch_3Nat':
         atsdims=ats*dims
     
-    with torch.no_grad(): ##
-        if device is None: ##
-            device = ddpm.device ##
+    with torch.no_grad(): 
+        if device is None: 
+            device = ddpm.device 
 
         # Starting from random noise 
         if args.input_shape=='batch_1_Nat_3':
-            x = torch.randn(n_samples, fake, ats, dims).to(device) ##
+            x = torch.randn(n_samples, fake, ats, dims).to(device) 
         elif args.input_shape=='batch_3Nat':
-            x = torch.randn(n_samples, atsdims).to(device) ##
+            x = torch.randn(n_samples, atsdims).to(device) 
             
-        for idx, t in enumerate(list(range(ddpm.n_steps))[::-1]): ##
-            # Estimating noise to be removed ##
-            time_tensor = (torch.ones(n_samples, 1) * t).to(device).long() ##
-            eta_theta = ddpm.backward(x, time_tensor, what_label) ##
+        for idx, t in enumerate(list(range(ddpm.n_steps))[::-1]): 
+            # Estimating noise to be removed 
+            time_tensor = (torch.ones(n_samples, 1) * t).to(device).long() 
+            eta_theta = ddpm.backward(x, time_tensor, what_label) 
 
-            alpha_t = ddpm.alphas[t] ##
-            alpha_t_bar = ddpm.alpha_bars[t] ##
+            alpha_t = ddpm.alphas[t] 
+            alpha_t_bar = ddpm.alpha_bars[t] 
 
-            # Partially denoising the image ##
-            x = (1 / alpha_t.sqrt()) * (x - (1 - alpha_t) / (1 - alpha_t_bar).sqrt() * eta_theta) ##
+            # Partial denoising  
+            x = (1 / alpha_t.sqrt()) * (x - (1 - alpha_t) / (1 - alpha_t_bar).sqrt() * eta_theta) 
 
-            if t > 0: ##
+            if t > 0: 
                 if args.input_shape=='batch_1_Nat_3':
-                    z = torch.randn(n_samples, fake, ats, dims).to(device) ##
+                    z = torch.randn(n_samples, fake, ats, dims).to(device) 
                 elif args.input_shape=='batch_3Nat':
-                    z = torch.randn(n_samples, atsdims).to(device) ## 
+                    z = torch.randn(n_samples, atsdims).to(device)  
                 
-                # Option 1: sigma_t squared = beta_t ##
-                beta_t = ddpm.betas[t] ##
-                sigma_t = beta_t.sqrt() ##
+                # Option 1: sigma_t squared = beta_t 
+                beta_t = ddpm.betas[t] 
+                sigma_t = beta_t.sqrt() 
 
                 # Option 2: sigma_t squared = beta_tilda_t
                 # prev_alpha_t_bar = ddpm.alpha_bars[t-1] if t > 0 else ddpm.alphas[0]
@@ -247,7 +218,7 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
                 # sigma_t = beta_tilda_t.sqrt()
 
                 # Adding some more noise like in Langevin Dynamics fashion
-                x = x + sigma_t * z ##
+                x = x + sigma_t * z 
 
             if idx in frame_idxs or t == 0:
                 if idx==(frame_idxs[-1]-1):
@@ -273,14 +244,12 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
 #############################
 
 class inpcrd_DDPM_cond(nn.Module):
-    def __init__(self, network, n_steps=200, min_beta=10 ** -4, max_beta=0.02, device=None, image_chw=(1, 71, 3)): 
+    def __init__(self, network, n_steps=200, min_beta=10 ** -4, max_beta=0.02, device=None):
         super(inpcrd_DDPM_cond, self).__init__()
         self.n_steps = n_steps
         self.device = device
-        self.image_chw = image_chw #AC orig
         self.network = network.to(device)
-        self.betas = torch.linspace(min_beta, max_beta, n_steps).to(
-            device)  # Number of steps is typically in the order of thousands
+        self.betas = torch.linspace(min_beta, max_beta, n_steps).to(device)  # Number of steps is typically in the order of thousands
         self.alphas = 1 - self.betas
         self.alpha_bars = torch.tensor([torch.prod(self.alphas[:i + 1]) for i in range(len(self.alphas))]).to(device)
 
@@ -322,7 +291,6 @@ def sinusoidal_embedding(n, d):
 ###
 
 class inpcrd_Seq_Conditioned(nn.Module): 
-    #def __init__(self, n_steps=1000, time_emb_dim=100, dims=3, Natoms=71): ##
     def __init__(self, max_size, n_steps=1000, time_emb_dim=100, Natoms=71, dims=3, NClasses=2, label_emb_dim=100): ##
         super(inpcrd_Seq_Conditioned, self).__init__() ##
         # Sinusoidal embedding
@@ -349,7 +317,6 @@ class inpcrd_Seq_Conditioned(nn.Module):
         #
         self.LReLU_a=nn.LeakyReLU(0.2)
         self.LReLU_b=nn.LeakyReLU(0.2)
-        #self.tanh=nn.Tanh()
 
     def forward(self, x, t, labels):                                                                     
         c = self.label_embedding(labels)
@@ -402,15 +369,15 @@ def training_loop(ddpm, loader, n_epochs, optim, device, display=False, store_pa
             lab = batch[1].to(device)
             n = len(x0)
 
-            # Picking some noise for each of the images in the batch, a timestep and the respective alpha_bars
+            # Picking some noise for each of the structures in the batch, a timestep and the respective alpha_bars
             eta = torch.randn_like(x0).to(device) 
             t = torch.randint(0, n_steps, (n,)).to(device)
 
-            # Computing the noisy image based on x0 and the time-step (forward process)
-            noisy_imgs = ddpm(x0, t, lab, eta)
+            # Computing the noisy structures based on x0 and the time-step (forward process)
+            noisy_strcs = ddpm(x0, t, lab, eta)
             
-            # Getting model estimation of noise based on the images and the time-step
-            eta_theta = ddpm.backward(noisy_imgs, t.reshape(n, -1), lab)
+            # Getting model estimation of noise based on the structures and the time-step
+            eta_theta = ddpm.backward(noisy_strcs, t.reshape(n, -1), lab)
             
             # Optimizing the MSE between the noise plugged and the predicted noise
             loss = mse(eta_theta, eta)
@@ -489,14 +456,14 @@ if args.dset=='RST':
 # Load data                                                              
 loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #AC
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") 
 print(f"{device=}")
 
 # Defining model
 n_steps, min_beta, max_beta = 1000, 10 ** -4, 0.02  # Originally used by the authors
 if args.dset=='RST':
     if args.input_shape=='batch_3Nat':
-        ddpm = inpcrd_DDPM_cond(inpcrd_Seq_Conditioned(max_size=box_s,n_steps=args.n_steps,time_emb_dim=args.time_emb_dim,Natoms=N_at,dims=3), n_steps=args.n_steps, min_beta=args.min_beta, max_beta=args.max_beta, device=device, image_chw=(1, N_at, 3))
+        ddpm = inpcrd_DDPM_cond(inpcrd_Seq_Conditioned(max_size=box_s,n_steps=args.n_steps,time_emb_dim=args.time_emb_dim,Natoms=N_at,dims=3), n_steps=args.n_steps, min_beta=args.min_beta, max_beta=args.max_beta, device=device) 
 
 if not args.no_train:
     if args.load_for_train:
@@ -506,7 +473,7 @@ if not args.no_train:
 print("Loading the trained model")
 best_model=ddpm
 
-best_model.load_state_dict(torch.load(store_path, map_location=device)) #AC orig
+best_model.load_state_dict(torch.load(store_path, map_location=device)) 
 best_model.eval()
 print("Model loaded")
 if args.dset=='RST':

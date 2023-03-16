@@ -42,6 +42,9 @@ As a case-study, the software LEaP and CPPTRAJ (AmberTools21) were used to gener
 
 On 250 samples generated per label after 200 epochs of training, accurarcies of 0.992 and 0.916 were obtained for label 0 (HHHH) and label 1 (MMMM), where the accuracy measures what fraction of the total generated structures respect a certain quality check condition (in this case, maximum bond length deviation of 0.5 Å).
 
-<!--
-![alt text](https://github.com/alescrnjar/FrameGen/blob/main/example_output/Initial_Label0_Label1.png)
--->
+<p align="center">
+<img width="500" src=https://github.com/alescrnjar/FrameFromNoise/blob/main/example_output/Example_generated_structures.png>
+</p>
+<p align="center">
+<em> Two examples of generated structures (left: label 0, right: label 1). </em>
+</p>

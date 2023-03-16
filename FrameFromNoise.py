@@ -121,13 +121,10 @@ def generate_training_data(prm_top_files, traj_files, frames_i, frames_f, backbo
 
             positions=sel.positions
             pos_resh=positions.reshape(positions.shape[0]*3)
-            #input_dats.append((torch.tensor(sel.positions),lab_val))                                                                  
             if args.input_shape=='batch_1_Nat_3':
-                #input_dats.append((torch.tensor([sel.positions]),lab_val)) #QUI
-                input_dats.append((torch.tensor([sel.positions/args.scaling_factor]),label)) #QUI
+                input_dats.append((torch.tensor([sel.positions/args.scaling_factor]),label)) 
             elif args.input_shape=='batch_3Nat':
-                #input_dats.append((torch.tensor(pos_resh),lab_val)) #QUI
-                input_dats.append((torch.tensor(pos_resh/args.scaling_factor),label)) #QUI 
+                input_dats.append((torch.tensor(pos_resh/args.scaling_factor),label)) 
             
             if (ts.frame == 0):
                 write_inpcrd(sel.positions/args.scaling_factor,outname=output_dir+'initial_lab'+str(label)+'.inpcrd')
@@ -257,7 +254,7 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
                     acc=0.
                     ac_counts=0
                 for i,x0 in enumerate(x):
-                    outname=args.output_directory+'output_frame-'+str(idx)+'_sample-'+str(i)+'_lab'+str(what_label[0].item())+'.inpcrd' #QUIQUI what_label[0] e' per fare veloce
+                    outname=args.output_directory+'output_frame-'+str(idx)+'_sample-'+str(i)+'_lab'+str(what_label[0].item())+'.inpcrd' 
                     if args.input_shape=='batch_1_Nat_3':
                         write_inpcrd((x0[0]*args.scaling_factor).cpu().detach().numpy().reshape(ats,dims),outname=outname)
                     elif args.input_shape=='batch_3Nat':
@@ -276,7 +273,7 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
 #############################
 
 class inpcrd_DDPM_cond(nn.Module):
-    def __init__(self, network, n_steps=200, min_beta=10 ** -4, max_beta=0.02, device=None, image_chw=(1, 71, 3)): #QUI
+    def __init__(self, network, n_steps=200, min_beta=10 ** -4, max_beta=0.02, device=None, image_chw=(1, 71, 3)): 
         super(inpcrd_DDPM_cond, self).__init__()
         self.n_steps = n_steps
         self.device = device

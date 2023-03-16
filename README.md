@@ -5,9 +5,11 @@
 - x0[0] nel write_inpcrd forse e sbagliato, se gli altri sono gli altri dei 5 n_samples!
 - perche lab 1 (MMMM) ha sempre meno accuracy di label 0 (HHHH)???
 - noisy_imgs -> noisy_strc
+- outname=args.output_directory+'output_frame-'+str(idx)+'_sample-'+str(i)+'_lab'+str(what_label[0].item())+'.inpcrd' #QUIQUI what_label[0] e' per fare veloce
+
 -->
 
-QUIQUI is a conditional denoising diffusion probabilistic model (DDPM) which, given the AMBER parameter and topology file of a biological system (.prmtop, .top) and an associated molecular dynamics (MD) trajectory (.dcd, .nc, ...), reconstructs a frame belonging to the same distribution of the sampled trajectory. Moreover, it is given a label (0 or 1) which allows to distinguish between frames with an observed condition from those without.
+FrameFromNoise is a conditional denoising diffusion probabilistic model (DDPM) which, given the AMBER parameter and topology file of a biological system (.prmtop, .top) and an associated molecular dynamics (MD) trajectory (.dcd, .nc, ...), reconstructs a frame belonging to the same distribution of the sampled trajectory. Moreover, it is given a label (0 or 1) which allows to distinguish between frames with an observed condition from those without.
 
 The trajectory is aligned and centered around the origin in the pre-processing stage, as this is necessary for the algorithm. The first frame is outputted as "initial.inpcrd"
 

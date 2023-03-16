@@ -24,8 +24,6 @@ from tensorboardX import SummaryWriter
 parser = argparse.ArgumentParser()
 
 # Input parameters
-parser.add_argument('--dset', default='RST', type=str) #MNIST RST
-
 parser.add_argument('--biosystem', default='PROTEIN', type=str)
 parser.add_argument('--input_directory', default='./example_input/' , type=str)
 parser.add_argument('--topology_0', default='peptide_lab0.prmtop', type=str) # Parameter and topology file
@@ -92,10 +90,7 @@ def generate_training_data(prm_top_files, traj_files, frames_i, frames_f, backbo
 
             positions=sel.positions
             pos_resh=positions.reshape(positions.shape[0]*3)
-            if args.input_shape=='batch_1_Nat_3':
-                input_dats.append((torch.tensor([sel.positions/args.scaling_factor]),label)) 
-            elif args.input_shape=='batch_3Nat':
-                input_dats.append((torch.tensor(pos_resh/args.scaling_factor),label)) 
+            input_dats.append((torch.tensor(pos_resh/args.scaling_factor),label)) 
             
             if (ts.frame == 0):
                 write_inpcrd(sel.positions/args.scaling_factor,outname=output_dir+'initial_lab'+str(label)+'.inpcrd')
@@ -176,20 +171,14 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
 
     atoms=ats
     ndims=dims
-    if args.input_shape=='batch_1_Nat_3':
-        fake=1
-    elif args.input_shape=='batch_3Nat':
-        atsdims=ats*dims
+    atsdims=ats*dims
     
     with torch.no_grad(): 
         if device is None: 
             device = ddpm.device 
 
         # Starting from random noise 
-        if args.input_shape=='batch_1_Nat_3':
-            x = torch.randn(n_samples, fake, ats, dims).to(device) 
-        elif args.input_shape=='batch_3Nat':
-            x = torch.randn(n_samples, atsdims).to(device) 
+        x = torch.randn(n_samples, atsdims).to(device) 
             
         for idx, t in enumerate(list(range(ddpm.n_steps))[::-1]): 
             # Estimating noise to be removed 
@@ -203,10 +192,7 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
             x = (1 / alpha_t.sqrt()) * (x - (1 - alpha_t) / (1 - alpha_t_bar).sqrt() * eta_theta) 
 
             if t > 0: 
-                if args.input_shape=='batch_1_Nat_3':
-                    z = torch.randn(n_samples, fake, ats, dims).to(device) 
-                elif args.input_shape=='batch_3Nat':
-                    z = torch.randn(n_samples, atsdims).to(device)  
+                z = torch.randn(n_samples, atsdims).to(device)  
                 
                 # Option 1: sigma_t squared = beta_t 
                 beta_t = ddpm.betas[t] 
@@ -226,10 +212,7 @@ def generate_new_inpcrds(ddpm, prm_top_file, n_samples=1, device=None, ats=71, d
                     ac_counts=0
                 for i,x0 in enumerate(x):
                     outname=args.output_directory+'output_frame-'+str(idx)+'_sample-'+str(i)+'_lab'+str(what_label[0].item())+'.inpcrd' 
-                    if args.input_shape=='batch_1_Nat_3':
-                        write_inpcrd((x0[0]*args.scaling_factor).cpu().detach().numpy().reshape(ats,dims),outname=outname)
-                    elif args.input_shape=='batch_3Nat':
-                        write_inpcrd((x0*args.scaling_factor).cpu().detach().numpy().reshape(ats,dims),outname=outname)
+                    write_inpcrd((x0*args.scaling_factor).cpu().detach().numpy().reshape(ats,dims),outname=outname)
                     b_dev=bonds_deviation(prm_top_file,outname)
                     #a_dev=angles_deviation(prm_top_file,outname)
                     if idx==(frame_idxs[-1]-1):
@@ -254,22 +237,14 @@ class inpcrd_DDPM_cond(nn.Module):
         self.alpha_bars = torch.tensor([torch.prod(self.alphas[:i + 1]) for i in range(len(self.alphas))]).to(device)
 
     def forward(self, x0, t, label, eta=None):
-        if args.input_shape=='batch_3Nat':
-            n, atsdims=x0.shape
-        #elif args.input_shape=='batch_1_Nat_3':
-        #    n, fake, ats, dims = x0.shape
+        n, atsdims=x0.shape
         a_bar = self.alpha_bars[t]
 
         if eta is None:
-            if args.input_shape=='batch_3Nat':
-                eta = torch.randn(n, atsdims).to(self.device)
-            #elif args.input_shape=='batch_1_Nat_3':
-            #    eta = torch.randn(n, dims, ats).to(self.device)
-                
-        if args.input_shape=='batch_3Nat':
-            noisy = a_bar.sqrt().reshape(n, 1) * x0 + (1 - a_bar).sqrt().reshape(n, 1) * eta 
-        #elif args.input_shape=='batch_1_Nat_3':
-        #    noisy = a_bar.sqrt().reshape(n, 1, 1, 1) * x0 + (1 - a_bar).sqrt().reshape(n, 1, 1, 1) * eta
+            eta = torch.randn(n, atsdims).to(self.device)
+            
+        noisy = a_bar.sqrt().reshape(n, 1) * x0 + (1 - a_bar).sqrt().reshape(n, 1) * eta 
+
         return noisy
 
     def backward(self, x, t, label):
@@ -423,35 +398,29 @@ random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 
-# Definitions
-STORE_PATH_MNIST = f"ddpm_model_mnist.pt"
-STORE_PATH_FASHION = f"ddpm_model_fashion.pt"
-
 ###
 
-if args.dset=='RST':
-    store_path = "ddpm_RST.pt"
+store_path = "ddpm_inpcrd.pt"
 
-if args.dset=='RST':
-    prmfs = [ args.input_directory + args.topology_0 , args.input_directory + args.topology_1 ]
-    trajfs = [ args.input_directory + args.trajectory_0 , args.input_directory + args.trajectory_1 ]
-    # Define MDAnalysis universe and related parameters
-    frames_f=[]
-    for i_l,label in enumerate(list(range(len(prmfs)))):
-        univ = mda.Universe(prmfs[i_l], trajfs[i_l])
-        nframes = len(univ.trajectory)
-        N_at = len(univ.select_atoms('all'))
-        print(f"{label=} {N_at=}")
-        box_s = max_size(prmfs[i_l],trajfs[i_l],'all',1.1) # Calculate largest coordinate for generation
-        print(f"{label=} {box_s=}")
-        print(f"{nframes=}")
-        frames_f.append(nframes-(nframes%args.batch_size))
-    if args.biosystem=='PROTEIN':
-        backbone='name CA C N'
-    if args.biosystem=='DNA':
-        backbone='name P'
-    print(f"{frames_f=}")
-    dataset = generate_training_data(prm_top_files=prmfs, traj_files=trajfs, frames_i=[0,0], frames_f=frames_f, backbone=backbone, output_dir=args.output_directory)  #HERE
+prmfs = [ args.input_directory + args.topology_0 , args.input_directory + args.topology_1 ]
+trajfs = [ args.input_directory + args.trajectory_0 , args.input_directory + args.trajectory_1 ]
+# Define MDAnalysis universe and related parameters
+frames_f=[]
+for i_l,label in enumerate(list(range(len(prmfs)))):
+    univ = mda.Universe(prmfs[i_l], trajfs[i_l])
+    nframes = len(univ.trajectory)
+    N_at = len(univ.select_atoms('all'))
+    print(f"{label=} {N_at=}")
+    box_s = max_size(prmfs[i_l],trajfs[i_l],'all',1.1) # Calculate largest coordinate for generation
+    print(f"{label=} {box_s=}")
+    print(f"{nframes=}")
+    frames_f.append(nframes-(nframes%args.batch_size))
+if args.biosystem=='PROTEIN':
+    backbone='name CA C N'
+if args.biosystem=='DNA':
+    backbone='name P'
+print(f"{frames_f=}")
+dataset = generate_training_data(prm_top_files=prmfs, traj_files=trajfs, frames_i=[0,0], frames_f=frames_f, backbone=backbone, output_dir=args.output_directory)  #HERE
 
 # Load data                                                              
 loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -461,9 +430,8 @@ print(f"{device=}")
 
 # Defining model
 n_steps, min_beta, max_beta = 1000, 10 ** -4, 0.02  # Originally used by the authors
-if args.dset=='RST':
-    if args.input_shape=='batch_3Nat':
-        ddpm = inpcrd_DDPM_cond(inpcrd_Seq_Conditioned(max_size=box_s,n_steps=args.n_steps,time_emb_dim=args.time_emb_dim,Natoms=N_at,dims=3), n_steps=args.n_steps, min_beta=args.min_beta, max_beta=args.max_beta, device=device) 
+if args.input_shape=='batch_3Nat':
+    ddpm = inpcrd_DDPM_cond(inpcrd_Seq_Conditioned(max_size=box_s,n_steps=args.n_steps,time_emb_dim=args.time_emb_dim,Natoms=N_at,dims=3), n_steps=args.n_steps, min_beta=args.min_beta, max_beta=args.max_beta, device=device) 
 
 if not args.no_train:
     if args.load_for_train:
@@ -476,9 +444,8 @@ best_model=ddpm
 best_model.load_state_dict(torch.load(store_path, map_location=device)) 
 best_model.eval()
 print("Model loaded")
-if args.dset=='RST':
-    print("Generating new conformations")
-    for i_l,label in enumerate(list(range(len(prmfs)))):
-        generate_new_inpcrds(ddpm, prmfs[i_l], n_samples=args.num_samples, device=device, ats=N_at, dims=3, what_label=torch.tensor(args.num_samples*[i_l]).to(device)) 
+print("Generating new conformations")
+for i_l,label in enumerate(list(range(len(prmfs)))):
+    generate_new_inpcrds(ddpm, prmfs[i_l], n_samples=args.num_samples, device=device, ats=N_at, dims=3, what_label=torch.tensor(args.num_samples*[i_l]).to(device)) 
     
 

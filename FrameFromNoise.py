@@ -30,28 +30,28 @@ parser.add_argument('--topology_0', default='peptide_lab0.prmtop', type=str) # P
 parser.add_argument('--trajectory_0', default='all_conformations_lab0.mdcrd', type=str) # Trajectory file
 parser.add_argument('--topology_1', default='peptide_lab1.prmtop', type=str) # Parameter and topology file
 parser.add_argument('--trajectory_1', default='all_conformations_lab1.mdcrd', type=str) # Trajectory file
-#parser.add_argument('--scaling_factor', default=1., type=float) # Trajectory file  #
+parser.add_argument('--scaling_factor', default=1., type=float) # useful to normalize data for training if wanted
 
 # Model parameters
 parser.add_argument("--no_train", default=False, type=bool)
 parser.add_argument("--load_for_train", default=False, type=bool)
-parser.add_argument('--batch_size', default=10, type=int) #orig: 128
-parser.add_argument('--n_epochs', default=200, type=int) #orig: 20
-parser.add_argument('--learning_rate', default=0.0001, type=float) #orig: 0.001
-parser.add_argument('--n_steps', default=1000, type=int) #orig: 1000
-parser.add_argument('--min_beta', default=10**-4, type=float) #orig: 10 ** -4 
-parser.add_argument('--max_beta', default=0.02, type=float) #orig:  0.02
-parser.add_argument('--time_emb_dim', default=100, type=int) #orig: 100
+parser.add_argument('--batch_size', default=10, type=int) 
+parser.add_argument('--n_epochs', default=200, type=int) 
+parser.add_argument('--learning_rate', default=0.0001, type=float) 
+parser.add_argument('--n_steps', default=1000, type=int) # original paper: 1000
+parser.add_argument('--min_beta', default=10**-4, type=float) #original paper: 10 ** -4 
+parser.add_argument('--max_beta', default=0.02, type=float) #original paper:  0.02
+parser.add_argument('--time_emb_dim', default=100, type=int) 
+parser.add_argument('--label_emb_dim', default=100, type=int) 
 parser.add_argument("--input_shape", default='batch_3Nat', type=str)
 
 # Classes settings                                                                                                                                                                
-parser.add_argument('--dist_cut', default=10.0, type=float) # distance cut-off for class defintion                                                                                 
+parser.add_argument('--seed', default=0, type=int) # random seed
 parser.add_argument('--N_classes', default=2, type=int) # Number of classes                                                                                                        
 parser.add_argument('--desired_labels', default=[0,1], type=list) # Classes to be considered for output   
 
 # Output parameters
-#parser.add_argument('--output_directory', default='./example_output/', type=str)
-parser.add_argument('--output_directory', default='./', type=str)
+parser.add_argument('--output_directory', default='./example_output/', type=str)
 parser.add_argument('--num_samples', default=5, type=int)
 
 
@@ -242,7 +242,7 @@ class inpcrd_DDPM_cond(nn.Module):
 
         if eta is None:
             eta = torch.randn(n, atsdims).to(self.device)
-            
+
         noisy = a_bar.sqrt().reshape(n, 1) * x0 + (1 - a_bar).sqrt().reshape(n, 1) * eta 
 
         return noisy
@@ -266,12 +266,12 @@ def sinusoidal_embedding(n, d):
 ###
 
 class inpcrd_Seq_Conditioned(nn.Module): 
-    def __init__(self, max_size, n_steps=1000, time_emb_dim=100, Natoms=71, dims=3, NClasses=2, label_emb_dim=100): ##
-        super(inpcrd_Seq_Conditioned, self).__init__() ##
+    def __init__(self, max_size, n_steps=1000, time_emb_dim=100, Natoms=71, dims=3, NClasses=2, label_emb_dim=100): 
+        super(inpcrd_Seq_Conditioned, self).__init__() 
         # Sinusoidal embedding
-        self.time_embed = nn.Embedding(n_steps, time_emb_dim) ##
-        self.time_embed.weight.data = sinusoidal_embedding(n_steps, time_emb_dim) ##
-        self.time_embed.requires_grad_(False) ##
+        self.time_embed = nn.Embedding(n_steps, time_emb_dim) 
+        self.time_embed.weight.data = sinusoidal_embedding(n_steps, time_emb_dim) 
+        self.time_embed.requires_grad_(False) 
         #
         self.label_embedding = nn.Embedding(NClasses, label_emb_dim)
         #
@@ -393,7 +393,7 @@ print(f"{args=}")
 
 print("AC: starting main")
 # Setting reproducibility
-SEED = 0
+SEED = args.seed
 random.seed(SEED)
 np.random.seed(SEED)
 torch.manual_seed(SEED)
@@ -431,7 +431,7 @@ print(f"{device=}")
 # Defining model
 n_steps, min_beta, max_beta = 1000, 10 ** -4, 0.02  # Originally used by the authors
 if args.input_shape=='batch_3Nat':
-    ddpm = inpcrd_DDPM_cond(inpcrd_Seq_Conditioned(max_size=box_s,n_steps=args.n_steps,time_emb_dim=args.time_emb_dim,Natoms=N_at,dims=3), n_steps=args.n_steps, min_beta=args.min_beta, max_beta=args.max_beta, device=device) 
+    ddpm = inpcrd_DDPM_cond(inpcrd_Seq_Conditioned(max_size=box_s,n_steps=args.n_steps,time_emb_dim=args.time_emb_dim,Natoms=N_at,dims=3, label_emb_dim=args.label_emb_dim), n_steps=args.n_steps, min_beta=args.min_beta, max_beta=args.max_beta, device=device) 
 
 if not args.no_train:
     if args.load_for_train:

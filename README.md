@@ -1,4 +1,4 @@
-# Pepdiff FrameDiff PeptideFromNoise PepNoise NoisyPeptide NoisyFrame FrameFromNoise
+# FrameFromNoise
 
 <!-- TO DO: 
 - Perche a volte la loss sale di colpo a ordini di grandezza anche se ormai si era raggiunto il plateau?
